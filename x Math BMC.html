@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Тренажер рівнянь ULTRA CHILL</title>
+    <style>
+        :root {
+            --bg-dark: #050714;
+            --surface-card: rgba(15, 20, 38, 0.7);
+            --surface-border: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-green: #10b981;
+            --accent-green-glow: rgba(16, 185, 129, 0.45);
+            --accent-yellow: #f59e0b;
+            --accent-yellow-glow: rgba(245, 158, 11, 0.45);
+            --accent-red: #ef4444;
+            --accent-red-glow: rgba(239, 68, 68, 0.45);
+            --accent-purple: #a855f7;
+            --accent-purple-glow: rgba(168, 85, 247, 0.5);
+            --accent-cyan: #06b6d4;
+            --accent-cyan-glow: rgba(6, 182, 212, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow: hidden;
+            position: relative;
+            background-image: 
+                radial-gradient(circle at 20% 20%, rgba(168, 85, 247, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(6, 182, 212, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.08) 0%, transparent 70%);
+        }
+
+        #particles-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 20px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            transform: scale(0.95) translate3d(0, 12px, 0);
+            overflow-y: auto;
+            max-width: 480px;
+            margin: 0 auto;
+            right: 0;
+            z-index: 1;
+            will-change: transform, opacity;
+        }
+
+        .screen.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: scale(1) translate3d(0, 0, 0);
+        }
+
+        /* Таби перемикання глав у навчанні */
+        .tabs-container {
+            display: flex;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.04);
+            padding: 4px;
+            border-radius: 16px;
+            border: 1px solid var(--surface-border);
+            backdrop-filter: blur(12px);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px 4px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 13px;
+            font-weight: 800;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .tab-btn.active {
+            background: rgba(168, 85, 247, 0.25);
+            color: #e9d5ff;
+            box-shadow: 0 0 15px var(--accent-purple-glow);
+            border: 1px solid rgba(168, 85, 247, 0.4);
+        }
+
+        .back-btn {
+            width: 46px;
+            height: 46px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--surface-border);
+            border-radius: 16px;
+            color: var(--text-main);
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            transition: all 0.2s ease;
+        }
+
+        .back-btn:active {
+            transform: scale(0.92);
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .formula-box {
+            background: linear-gradient(135deg, rgba(20, 27, 47, 0.85) 0%, rgba(10, 15, 30, 0.95) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 24px;
+            padding: 18px 16px;
+            text-align: center;
+            font-size: 23px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            word-break: break-word;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            position: relative;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .formula-box::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 15%; right: 15%; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(168, 85, 247, 0.6), rgba(6, 182, 212, 0.6), transparent);
+        }
+
+        .ok-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: none;
+            border-radius: 18px;
+            padding: 14px 44px;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            margin: auto auto 0 auto;
+            cursor: pointer;
+            display: block;
+            box-shadow: 0 8px 25px var(--accent-green-glow);
+            transition: all 0.2s ease;
+        }
+
+        .ok-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 10px var(--accent-green-glow);
+        }
+
+        .answers-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .answer-card {
+            background: var(--surface-card);
+            border: 1px solid var(--surface-border);
+            border-radius: 20px;
+            padding: 12px 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 3px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            text-align: center;
+            font-size: 13px;
+            line-height: 1.4;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .answer-card.static-demo {
+            cursor: default;
+        }
+
+        .answer-card:not(.static-demo):active {
+            transform: scale(0.96);
+            background: rgba(25, 33, 58, 0.9);
+        }
+
+        .answer-card.correct {
+            border-color: var(--accent-green) !important;
+            background: rgba(16, 185, 129, 0.18) !important;
+            box-shadow: 0 0 25px var(--accent-green-glow) !important;
+            color: #d1fae5;
+        }
+
+        .answer-card.wrong {
+            border-color: var(--accent-red) !important;
+            background: rgba(239, 68, 68, 0.18) !important;
+            box-shadow: 0 0 25px var(--accent-red-glow) !important;
+            color: #fee2e2;
+        }
+
+        .menu-card {
+            position: relative;
+            height: 110px;
+            border-radius: 22px;
+            overflow: hidden;
+            border: 1px solid var(--surface-border);
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            flex-shrink: 0;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .menu-card.border-green { border-color: rgba(16, 185, 129, 0.4); }
+        .menu-card.border-yellow { border-color: rgba(245, 158, 11, 0.4); }
+        .menu-card.border-red { border-color: rgba(239, 68, 68, 0.4); }
+        .menu-card.border-purple { border-color: rgba(168, 85, 247, 0.5); }
+
+        .menu-card:active {
+            transform: scale(0.97);
+        }
+
+        .menu-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.38) contrast(1.15);
+            transition: transform 0.4s ease;
+        }
+
+        .menu-card-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(5,7,20,0.8) 100%);
+            gap: 4px;
+            padding: 10px;
+        }
+
+        .score-badge {
+            font-size: 12px;
+            font-weight: 800;
+            display: none;
+            background: rgba(5, 7, 20, 0.85);
+            border: 1px solid rgba(255,255,255,0.15);
+            padding: 2px 10px;
+            border-radius: 20px;
+            backdrop-filter: blur(8px);
+        }
+
+        .card-title-text {
+            font-size: 22px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            text-align: center;
+        }
+
+        .border-green .card-title-text { color: #34d399; text-shadow: 0 0 14px var(--accent-green-glow); }
+        .border-yellow .card-title-text { color: #fbbf24; text-shadow: 0 0 14px var(--accent-yellow-glow); }
+        .border-red .card-title-text { color: #f87171; text-shadow: 0 0 14px var(--accent-red-glow); }
+        .border-purple .card-title-text { color: #c084fc; text-shadow: 0 0 16px var(--accent-purple-glow); }
+
+        .card-subtitle {
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .reset-btn {
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #f87171;
+            padding: 12px 20px;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            text-align: center;
+            margin-top: auto;
+            transition: all 0.2s ease;
+        }
+
+        .reset-btn:active {
+            background: rgba(239, 68, 68, 0.2);
+            transform: scale(0.97);
+        }
+
+        .act-header-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .act-current-title {
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .notification {
+            position: fixed;
+            top: -70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 20, 38, 0.95);
+            border: 1px solid var(--surface-border);
+            color: var(--text-main);
+            padding: 12px 28px;
+            border-radius: 30px;
+            font-weight: 800;
+            font-size: 15px;
+            letter-spacing: 0.5px;
+            text-align: center;
+            z-index: 1000;
+            transition: top 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 12px 35px rgba(0,0,0,0.6);
+            pointer-events: none;
+            white-space: nowrap;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+
+        .notification.show {
+            top: 24px;
+        }
+
+        .notification.success { border-color: var(--accent-green); color: #34d399; box-shadow: 0 10px 25px var(--accent-green-glow); }
+        .notification.error { border-color: var(--accent-red); color: #f87171; box-shadow: 0 10px 25px var(--accent-red-glow); }
+    </style>
+</head>
+<body>
+
+<canvas id="particles-canvas"></canvas>
+<div id="toast-notification" class="notification"></div>
+
+<!-- 1. Демо-екран (Навчання з перемикачем) -->
+<div id="screen-quiz" class="screen active">
+    <!-- Перемикач глав -->
+    <div class="tabs-container">
+        <button class="tab-btn" onclick="switchDemoChapter(1)">ГЛАВА I</button>
+        <button class="tab-btn" onclick="switchDemoChapter(2)">ГЛАВА II</button>
+        <button class="tab-btn" onclick="switchDemoChapter(3)">ГЛАВА III</button>
+        <button class="tab-btn active" onclick="switchDemoChapter(4)">ГЛАВА IV</button>
+    </div>
+
+    <div class="formula-box" id="demo-formula">2(3X + 4) - 5 = 27</div>
+    
+    <div class="answers-grid" id="demo-answers-grid"></div>
+
+    <button class="ok-btn" onclick="goToScreen('screen-chapters')">ЗРОЗУМІЛО (ОК)</button>
+</div>
+
+<!-- 2. Вибір ГЛАВ -->
+<div id="screen-chapters" class="screen">
+    <div class="back-btn" onclick="goToScreen('screen-quiz')">←</div>
+
+    <div class="menu-card border-green" onclick="openChapter(1)">
+        <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80" alt="Глава 1">
+        <div class="menu-card-overlay">
+            <div class="score-badge" id="chapter-score-1">0</div>
+            <div class="card-title-text">ГЛАВА I</div>
+            <div class="card-subtitle">Прості (1 дія: X - 5 = 12)</div>
+        </div>
+    </div>
+
+    <div class="menu-card border-yellow" onclick="openChapter(2)">
+        <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80" alt="Глава 2">
+        <div class="menu-card-overlay">
+            <div class="score-badge" id="chapter-score-2">0</div>
+            <div class="card-title-text">ГЛАВА II</div>
+            <div class="card-subtitle">Середні (2 дії: X • 2 + 3 = 11)</div>
+        </div>
+    </div>
+
+    <div class="menu-card border-red" onclick="openChapter(3)">
+        <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80" alt="Глава 3">
+        <div class="menu-card-overlay">
+            <div class="score-badge" id="chapter-score-3">0</div>
+            <div class="card-title-text">ГЛАВА III</div>
+            <div class="card-subtitle">Складні (3 дії: 2X • 3 + 4 = 22)</div>
+        </div>
+    </div>
+
+    <div class="menu-card border-purple" onclick="openChapter(4)">
+        <img src="https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=600&q=80" alt="Глава 4">
+        <div class="menu-card-overlay">
+            <div class="score-badge" id="chapter-score-4">0</div>
+            <div class="card-title-text">ГЛАВА IV</div>
+            <div class="card-subtitle">УЛЬТРА ХАРДКОР: 2(3X + 4) - 5 = 27</div>
+        </div>
+    </div>
+
+    <button class="reset-btn" onclick="resetScores()">Скинути прогрес</button>
+</div>
+
+<!-- 3. Вибір РІВНІВ -->
+<div id="screen-acts" class="screen">
+    <div class="act-header-row">
+        <div class="back-btn" onclick="goToScreen('screen-chapters')">←</div>
+        <div class="act-current-title" id="chapter-title-display">ГЛАВА I</div>
+    </div>
+
+    <div class="menu-card border-green" onclick="openAct(1)">
+        <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80" alt="Рівень 1">
+        <div class="menu-card-overlay">
+            <div class="score-badge" id="act-score-1">0</div>
+            <div class="card-title-text" id="act-title-1">РІВЕНЬ 1</div>
+            <div class="card-subtitle">Легкі числа</div>
+        </div>
+    </div>
+
+    <div class="menu-card border-yellow" onclick="openAct(2)">
+        <img src="https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=600&q=80" alt="Рівень 2">
+        <div class="menu-card-overlay">
+            <div class="score-badge" id="act-score-2">0</div>
+            <div class="card-title-text" id="act-title-2">РІВЕНЬ 2</div>
+            <div class="card-subtitle">Середні числа</div>
+        </div>
+    </div>
+
+    <div class="menu-card border-red" onclick="openAct(3)">
+        <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80" alt="Рівень 3">
+        <div class="menu-card-overlay">
+            <div class="score-badge" id="act-score-3">0</div>
+            <div class="card-title-text" id="act-title-3">РІВЕНЬ 3</div>
+            <div class="card-subtitle">Складніші числа</div>
+        </div>
+    </div>
+</div>
+
+<!-- 4. Гра -->
+<div id="screen-act-detail" class="screen">
+    <div class="act-header-row">
+        <div class="back-btn" onclick="goToScreen('screen-acts')">←</div>
+        <div class="act-current-title" id="act-title-display">ГЛАВА IV - РІВЕНЬ 1</div>
+    </div>
+
+    <div class="formula-box" id="act-formula">...</div>
+    <div class="answers-grid" id="act-answers"></div>
+</div>
+
+<script>
+    // --- ПЛАВНІ CHILL-ЧАСТИНКИ НА ФОНІ ---
+    const canvas = document.getElementById('particles-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    const colors = ['rgba(168, 85, 247, ', 'rgba(6, 182, 212, ', 'rgba(16, 185, 129, '];
+
+    for (let i = 0; i < 30; i++) {
+        particles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            radius: Math.random() * 2.5 + 1,
+            vx: (Math.random() - 0.5) * 0.3,
+            vy: (Math.random() - 0.5) * 0.3,
+            colorPrefix: colors[Math.floor(Math.random() * colors.length)],
+            alpha: Math.random() * 0.4 + 0.2
+        });
+    }
+
+    function animateParticles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+            p.x += p.vx;
+            p.y += p.vy;
+
+            if (p.x < 0) p.x = canvas.width;
+            if (p.x > canvas.width) p.x = 0;
+            if (p.y < 0) p.y = canvas.height;
+            if (p.y > canvas.height) p.y = 0;
+
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            ctx.fillStyle = `${p.colorPrefix}${p.alpha})`;
+            ctx.fill();
+        });
+        requestAnimationFrame(animateParticles);
+    }
+    animateParticles();
+
+    // --- ДЕМО ДАНІ ДЛЯ НАВЧАННЯ ---
+    const demoData = {
+        1: {
+            formula: "X - 5 = 12",
+            cards: [
+                { lines: ["X = 12 - 5", "X = 7"], isCorrect: false },
+                { lines: ["X = 12 + 5", "X = 17"], isCorrect: true },
+                { lines: ["X = 12 • 5", "X = 60"], isCorrect: false },
+                { lines: ["X = 12 : 5", "X = 2.4"], isCorrect: false }
+            ]
+        },
+        2: {
+            formula: "X • 2 + 3 = 11",
+            cards: [
+                { lines: ["X • 2 = 11 + 3", "X • 2 = 14", "X = 7"], isCorrect: false },
+                { lines: ["X • 2 = 11 - 3", "X • 2 = 8", "X = 8 : 2 = 4"], isCorrect: true },
+                { lines: ["X • 2 = 8", "X = 8 • 2", "X = 16"], isCorrect: false },
+                { lines: ["X • 2 = 11", "X = 11 - 2", "X = 9"], isCorrect: false }
+            ]
+        },
+        3: {
+            formula: "2X • 3 + 4 = 22",
+            cards: [
+                { lines: ["2X • 3 = 22 - 4", "2X = 18 : 3", "X = 6 : 2 = 3"], isCorrect: true },
+                { lines: ["2X • 3 = 22 + 4", "2X = 26 : 3", "X = 8.6"], isCorrect: false },
+                { lines: ["2X = 18 • 3", "2X = 54", "X = 27"], isCorrect: false },
+                { lines: ["2X = 18 - 3", "2X = 15", "X = 7.5"], isCorrect: false }
+            ]
+        },
+        4: {
+            formula: "2(3X + 4) - 5 = 27",
+            cards: [
+                // Правильний варіант із детальним поясненням кроків
+                { 
+                    lines: [
+                        "1) 2(3X + 4) = 27 + 5", 
+                        "2) 3X + 4 = 32 : 2", 
+                        "3) 3X = 16 - 4", 
+                        "4) X = 12 : 3 = 4"
+                    ], 
+                    isCorrect: true 
+                },
+                { 
+                    lines: [
+                        "1) 2(3X + 4) = 27 - 5", 
+                        "2) 3X + 4 = 22 : 2", 
+                        "3) X = (11 - 4) : 3"
+                    ], 
+                    isCorrect: false 
+                },
+                { 
+                    lines: [
+                        "1) 2(3X + 4) = 32", 
+                        "2) 3X + 4 = 32 • 2", 
+                        "3) 3X = 64 - 4"
+                    ], 
+                    isCorrect: false 
+                },
+                { 
+                    lines: [
+                        "1) 3X + 4 = 32 : 2", 
+                        "2) 3X = 16 + 4", 
+                        "3) X = 20 : 3"
+                    ], 
+                    isCorrect: false 
+                }
+            ]
+        }
+    };
+
+    function switchDemoChapter(chNum) {
+        document.querySelectorAll('.tab-btn').forEach((btn, idx) => {
+            btn.classList.toggle('active', idx + 1 === chNum);
+        });
+
+        const data = demoData[chNum];
+        document.getElementById('demo-formula').textContent = data.formula;
+
+        const grid = document.getElementById('demo-answers-grid');
+        grid.innerHTML = '';
+
+        data.cards.forEach(c => {
+            const card = document.createElement('div');
+            card.className = `answer-card static-demo ${c.isCorrect ? 'correct' : ''}`;
+            c.lines.forEach(l => {
+                const lineDiv = document.createElement('div');
+                lineDiv.textContent = l;
+                card.appendChild(lineDiv);
+            });
+            grid.appendChild(card);
+        });
+    }
+
+    // За замовчуванням показуємо Главу 4 в навчанні
+    switchDemoChapter(4);
+
+    // --- ЛОГІКА ГРИ ---
+    function goToScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+    }
+
+    let currentChapter = 1;
+    let currentAct = 1; 
+    let currentCorrectIndex = -1;
+    let toastTimeout;
+    let gameScores = {};
+
+    function loadScores() {
+        const savedScores = localStorage.getItem('gameScores_v17');
+        if (savedScores) {
+            try { gameScores = JSON.parse(savedScores); } catch (e) { gameScores = {}; }
+        }
+        updateScoreDisplays();
+    }
+
+    function saveScores() {
+        localStorage.setItem('gameScores_v17', JSON.stringify(gameScores));
+    }
+
+    function updateScoreDisplays() {
+        for (let ch = 1; ch <= 4; ch++) {
+            let totalCorrect = 0;
+            let totalWrong = 0;
+
+            for (let act = 1; act <= 3; act++) {
+                const data = gameScores[`${ch}_${act}`] || { correct: 0, wrong: 0 };
+                totalCorrect += data.correct || 0;
+                totalWrong += data.wrong || 0;
+            }
+
+            const chElem = document.getElementById(`chapter-score-${ch}`);
+            if (chElem) {
+                if (totalCorrect > 0 || totalWrong > 0) {
+                    chElem.innerHTML = `<span style="color:#34d399">✅ ${totalCorrect}</span> <span style="color:#f87171; margin-left:6px;">❌ ${totalWrong}</span>`;
+                    chElem.style.display = 'block';
+                } else {
+                    chElem.style.display = 'none';
+                }
+            }
+        }
+
+        for (let act = 1; act <= 3; act++) {
+            const data = gameScores[`${currentChapter}_${act}`] || { correct: 0, wrong: 0 };
+            const actElem = document.getElementById(`act-score-${act}`);
+            if (actElem) {
+                if ((data.correct || 0) > 0 || (data.wrong || 0) > 0) {
+                    actElem.innerHTML = `<span style="color:#34d399">✅ ${data.correct || 0}</span> <span style="color:#f87171; margin-left:6px;">❌ ${data.wrong || 0}</span>`;
+                    actElem.style.display = 'block';
+                } else {
+                    actElem.style.display = 'none';
+                }
+            }
+        }
+    }
+
+    function resetScores() {
+        if (confirm('Скинути весь прогрес і статистику помилок?')) {
+            gameScores = {};
+            saveScores();
+            updateScoreDisplays();
+            showToast('Прогрес скинуто!');
+        }
+    }
+
+    function showToast(text, type = 'normal') {
+        const toast = document.getElementById('toast-notification');
+        toast.textContent = text;
+        toast.className = 'notification show ' + type;
+
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => {
+            toast.classList.remove('show');
+        }, 1500);
+    }
+
+    function openChapter(chNum) {
+        currentChapter = chNum;
+        const romanCh = ["I", "II", "III", "IV"][currentChapter - 1];
+        document.getElementById('chapter-title-display').textContent = `ГЛАВА ${romanCh}`;
+        updateScoreDisplays();
+        goToScreen('screen-acts');
+    }
+
+    function openAct(actNum) {
+        currentAct = actNum;
+        const romanCh = ["I", "II", "III", "IV"][currentChapter - 1];
+        document.getElementById('act-title-display').textContent = `ГЛАВА ${romanCh} - РІВЕНЬ ${currentAct}`;
+        generateTask();
+        goToScreen('screen-act-detail');
+    }
+
+    function getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function generateTask() {
+        if (currentChapter === 1) generateChapter1();
+        else if (currentChapter === 2) generateChapter2();
+        else if (currentChapter === 3) generateChapter3();
+        else generateChapter4();
+    }
+
+    // --- ГЛАВА 1: Прості (1 дія) ---
+    function generateChapter1() {
+        let maxLimit = currentAct === 1 ? 10 : (currentAct === 2 ? 20 : 50);
+        let a = getRandomInt(1, Math.floor(maxLimit / 2));
+        let b = getRandomInt(1, maxLimit - a);
+        let xVal = a + b;
+
+        let formulaStr = `X - ${a} = ${b}`;
+        let cards = [
+            { lines: [`X = ${b} + ${a}`, `X = ${xVal}`], isCorrect: true },
+            { lines: [`X = ${b} - ${a}`, `X = ${Math.abs(b - a) || 1}`], isCorrect: false },
+            { lines: [`X = ${b + 2} + ${a}`, `X = ${xVal + 2}`], isCorrect: false },
+            { lines: [`X = ${b} • ${a}`, `X = ${b * a}`], isCorrect: false }
+        ];
+        renderCards(formulaStr, cards);
+    }
+
+    // --- ГЛАВА 2: У 2 дії (X • a + b = c) ---
+    function generateChapter2() {
+        let maxLimit = currentAct === 1 ? 10 : (currentAct === 2 ? 20 : 50);
+        let mult = getRandomInt(2, 4);
+        let xVal = getRandomInt(1, Math.floor(maxLimit / mult) || 1);
+        let b = getRandomInt(1, 10);
+        let total = xVal * mult + b;
+        let step1 = total - b;
+
+        let formulaStr = `X • ${mult} + ${b} = ${total}`;
+
+        let cards = [
+            { lines: [`X • ${mult} = ${total} - ${b}`, `X • ${mult} = ${step1}`, `X = ${step1} : ${mult}`, `X = ${xVal}`], isCorrect: true },
+            { lines: [`X • ${mult} = ${total} + ${b}`, `X • ${mult} = ${total + b}`, `X = ${(total + b)} : ${mult}`, `X = ${Math.floor((total + b) / mult) || 1}`], isCorrect: false },
+            { lines: [`X • ${mult} = ${step1}`, `X = ${step1} • ${mult}`, `X = ${step1 * mult}`], isCorrect: false },
+            { lines: [`X • ${mult} = ${step1}`, `X = ${step1} - ${mult}`, `X = ${Math.abs(step1 - mult)}`], isCorrect: false }
+        ];
+        renderCards(formulaStr, cards);
+    }
+
+    // --- ГЛАВА 3: Складні на 3 ДІЇ (2X • a + b = c) ---
+    function generateChapter3() {
+        let coef = getRandomInt(2, 3);
+        let mult = getRandomInt(2, 3);
+        let xVal = getRandomInt(2, currentAct === 1 ? 4 : (currentAct === 2 ? 8 : 12));
+        let b = getRandomInt(2, 10);
+        
+        let total = (coef * xVal) * mult + b;
+        let step1 = total - b;
+        let step2 = step1 / mult;
+
+        let formulaStr = `${coef}X • ${mult} + ${b} = ${total}`;
+
+        let cards = [
+            { lines: [`${coef}X • ${mult} = ${total} - ${b}`, `${coef}X = ${step1} : ${mult}`, `X = ${step2} : ${coef}`, `X = ${xVal}`], isCorrect: true },
+            { lines: [`${coef}X • ${mult} = ${total} + ${b}`, `${coef}X = ${total + b} : ${mult}`, `X = ${Math.floor((total + b) / mult) || 1}`], isCorrect: false },
+            { lines: [`${coef}X • ${mult} = ${step1}`, `${coef}X = ${step1} • ${mult}`, `X = ${(step1 * mult) / coef}`], isCorrect: false },
+            { lines: [`${coef}X = ${step2}`, `X = ${step2} - ${coef}`, `X = ${Math.abs(step2 - coef)}`], isCorrect: false }
+        ];
+
+        renderCards(formulaStr, cards);
+    }
+
+    // --- ГЛАВА 4: УЛЬТРА ХАРДКОР (3 дії з дужками) ---
+    function generateChapter4() {
+        let B = getRandomInt(2, 3);
+        let C = getRandomInt(2, 6);
+        let A = getRandomInt(2, 3);
+        let D = getRandomInt(3, 10);
+
+        let maxLimit = currentAct === 1 ? 4 : (currentAct === 2 ? 8 : 12);
+        let xVal = getRandomInt(2, maxLimit);
+
+        let insideVal = B * xVal + C;
+        let multVal = A * insideVal;
+        let total = multVal - D;
+
+        let step1 = total + D;
+        let step2 = step1 / A;
+        let step3 = step2 - C;
+
+        let formulaStr = `${A}(${B}X + ${C}) - ${D} = ${total}`;
+
+        let cards = [
+            { 
+                lines: [
+                    `${A}(${B}X + ${C}) = ${total} + ${D}`, 
+                    `${B}X + ${C} = ${step1} : ${A}`, 
+                    `${B}X = ${step2} - ${C}`, 
+                    `X = ${step3} : ${B} = ${xVal}`
+                ], 
+                isCorrect: true 
+            },
+            { 
+                lines: [
+                    `${A}(${B}X + ${C}) = ${total} - ${D}`, 
+                    `${B}X + ${C} = ${Math.abs(total - D)} : ${A}`, 
+                    `X = ${Math.floor(Math.abs(total - D) / (A * B)) || 1}`
+                ], 
+                isCorrect: false 
+            },
+            { 
+                lines: [
+                    `${A}(${B}X + ${C}) = ${step1}`, 
+                    `${B}X + ${C} = ${step1} • ${A}`, 
+                    `X = ${step1 * A}`
+                ], 
+                isCorrect: false 
+            },
+            { 
+                lines: [
+                    `${B}X + ${C} = ${step2}`, 
+                    `${B}X = ${step2} + ${C}`, 
+                    `X = ${Math.floor((step2 + C) / B)}`
+                ], 
+                isCorrect: false 
+            }
+        ];
+
+        renderCards(formulaStr, cards);
+    }
+
+    function renderCards(formulaStr, cards) {
+        document.getElementById('act-formula').textContent = formulaStr;
+
+        cards.sort(() => Math.random() - 0.5);
+        currentCorrectIndex = cards.findIndex(c => c.isCorrect);
+
+        const answersGrid = document.getElementById('act-answers');
+        answersGrid.innerHTML = '';
+
+        cards.forEach((cardData, idx) => {
+            const card = document.createElement('div');
+            card.className = 'answer-card';
+            card.onclick = () => selectAndCheckAnswer(idx, card);
+
+            cardData.lines.forEach(lineText => {
+                const lineDiv = document.createElement('div');
+                lineDiv.textContent = lineText;
+                card.appendChild(lineDiv);
+            });
+
+            answersGrid.appendChild(card);
+        });
+    }
+
+    function selectAndCheckAnswer(index, cardElem) {
+        const key = `${currentChapter}_${currentAct}`;
+        if (!gameScores[key]) gameScores[key] = { correct: 0, wrong: 0 };
+
+        if (index === currentCorrectIndex) {
+            cardElem.classList.add('correct');
+            showToast('ПРАВИЛЬНО!', 'success');
+            gameScores[key].correct = (gameScores[key].correct || 0) + 1;
+            saveScores();
+            updateScoreDisplays();
+            setTimeout(() => generateTask(), 600);
+        } else {
+            cardElem.classList.add('wrong');
+            showToast('НЕПРАВИЛЬНО!', 'error');
+            gameScores[key].wrong = (gameScores[key].wrong || 0) + 1;
+            saveScores();
+            updateScoreDisplays();
+        }
+    }
+
+    loadScores();
+</script>
+
+</body>
+</html>
